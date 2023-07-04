@@ -13,7 +13,7 @@ Error handling was not properly done.
 2. AverageBlitzAnd40Lines.js - a few seconds.
 
 ### Recipes:
-Average 40l and blitz scores:
+#### Average 40l and blitz scores:
 1. run RecordsGetter.js
 2. run AverageBlitzAnd40Lines.js
 

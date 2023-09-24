@@ -9,7 +9,7 @@ async function main() {
 
     let i;
     console.log(process.cwd());
-    let maxTr=25000;
+    let maxTr = 25000;
     const saveFrequency = 100;
     let recordUserArray = [];
     let usersAlreadyDone = [];
@@ -77,16 +77,21 @@ async function main() {
         const len = users.length;
         for (i = 0; i < len; i++) {
             console.log(`${chalk.blueBright(users[i].username)}: ${chalk.yellow(`${users[i].league.rating} TR`)}, ` +
-             `${chalk.red(`${users[i].league.rank.toUpperCase()}`)}\x1b[0m`);
+                `${chalk.red(`${users[i].league.rank.toUpperCase()}`)}\x1b[0m`);
             maxTr = users[i].league.rating;
             if (usersAlreadyDone.includes(users[i].username)) {
                 continue;
-            }
-            else {
+            } else {
                 usersAlreadyDone.push(users[i].username);
             }
-            let records = await getUserRecords(users[i].username)
-            recordUserArray.push({tetraStats:users[i], records: records});
+
+            let getRecordPromise = new Promise(resolve => {
+                getUserRecords(users[i].username).then(records => {
+                    recordUserArray.push({tetraStats: users[i], records: records})
+                    resolve();
+                })
+            })
+
             //wait for user input or 1 second whichever comes first
             const timerPromise = new Promise(resolve => setTimeout(resolve, 1000));
             let stopRequested = false;
@@ -97,9 +102,9 @@ async function main() {
                 });
             });
 
-            await Promise.race([timerPromise, userInputPromise]);
+            await Promise.race([Promise.all([timerPromise, getRecordPromise]), userInputPromise]);
 
-            if(stopRequested) {
+            if (stopRequested) {
                 console.log("User has requested to stop.");
 
                 saveDataMidway(recordUserArray);
@@ -108,7 +113,7 @@ async function main() {
             }
 
 
-            if (i%saveFrequency === 0 && i !== 0) {
+            if (i % saveFrequency === 0 && i !== 0) {
                 saveDataMidway(recordUserArray);
             }
         }
@@ -119,8 +124,7 @@ async function main() {
                 console.log("Results saved to file.");
             }
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
     }
 

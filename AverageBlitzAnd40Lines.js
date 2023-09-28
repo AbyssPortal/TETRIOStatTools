@@ -31,8 +31,14 @@ async function main() {
         let rankSumBlitzScore = {};
         let rankCountBlitz = {};
 
+        const rdMax = 100;
+
         for (let i = 0; i < len; i++) {
+            if (data[i].tetraStats.league.rd > rdMax) {
+                continue;
+            }
             let record = data[i].records;
+
             if (!isNaN(get40lTime(record))) {
                 if (!isNaN(rankSum40lTimes[data[i].tetraStats.league.rank])) {
                     rankSum40lTimes[data[i].tetraStats.league.rank] += get40lTime(record);

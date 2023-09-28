@@ -67,7 +67,6 @@ async function main() {
         console.log()
         const fortyLinesColor = chalk.hex('FFFE33')
         const blitzColor = chalk.hex('FD5823')
-        const rankColor = chalk.hex('FF4CA7')
         console.log('   ' + '     ' + fortyLinesColor('40 Line sprint') + ' | ' +
             blitzColor('2 Minute blitz'))
         let ranks = Object.keys(rankSum40lTimes);

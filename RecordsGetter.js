@@ -13,7 +13,6 @@ async function main() {
     const saveFrequency = 100;
     let recordUserArray = [];
     let usersAlreadyDone = [];
-    let maxUsersPerRank = 200;
 
 
     if (await yesOrNo("use previous data? (y/n)")) {
@@ -33,6 +32,7 @@ async function main() {
         }
     }
 
+    let maxUsersPerRank = await numberInput("Enter the maximum number of users per rank (distributed randomly, put 999999999 for all the users): ");
     async function readResults() {
         try {
             const jsonString = await fs.promises.readFile('resultsUnfinished.json', 'utf8');
@@ -108,7 +108,7 @@ async function main() {
     }
 
     async function addUserRecords(user) {
-        console.log(`${chalk.blueBright(user.username)}: ${chalk.yellow(`${user.league.rating} TR`)}, ` +
+        console.log(`${chalk.blueBright(user.username)}: ${chalk.yellow(`${user.league.tr} TR`)}, ` +
             `${chalk.red(`${user.league.rank.toUpperCase()}`)}\x1b[0m`);
         maxTr = user.league.rating;
 
@@ -159,6 +159,25 @@ async function yesOrNo(question) {
 
     return input.startsWith("y");
 }
+
+async function numberInput(question) {
+    let input;
+
+    console.log(question);
+    const userInputPromise = new Promise(resolve => {
+        process.stdin.once('data', data => {
+            input = parseFloat(data.toString().trim()); // parse the user input as a number
+            resolve(input); // resolve the promise with the user input
+        });
+    });
+
+    await userInputPromise;
+
+    // Return true if the number is greater than or equal to the threshold
+    return input;
+}
+
+
 async function getUsersInRange(limit, after) {
     let url = `https://ch.tetr.io/api/users/lists/league?limit=${limit}&after=${after}`;
     let response = await fetch(url);
@@ -167,14 +186,57 @@ async function getUsersInRange(limit, after) {
 }
 
 async function getUsers() {
-    let url = `https://ch.tetr.io/api/users/lists/league/all`;
-    let response = await fetch(url);
-    let data = await response.json();
-    return data.data.users;
+
+    let url = "https://ch.tetr.io/api/users/by/league";
+    let session = (new Date() / 1000) + "_AVG_FORTY_LINES_PER_RANK";
+    // im not sure if this is how x session headers work
+    let options = {
+        headers: {
+            'X-Session-ID': session,
+        }
+    };
+    let res = [];
+    let curr_url = url + "?limit=100";
+    let response = await fetch(curr_url, options);
+    if (response.ok) {
+        let data = await response.json();
+        res = res.concat(data.data.entries);
+    } else {
+        console.log("HTTP-Error: " + response.status);
+    }
+    await sleep(1000);
+
+    while (true) {
+
+        let after_parm = "?after="  + res[res.length - 1].p.pri + ":" + res[res.length - 1].p.sec + ":" + res[res.length - 1].p.ter;
+        let curr_url = url + after_parm + "&limit=100"  ;
+        let response = await fetch(curr_url, options);
+        if (response.ok) {
+            let data = await response.json();
+            if (data.data.entries.length == 0) {
+                break;
+            }
+            res = res.concat(data.data.entries);
+        } else {
+            console.log("HTTP-Error: " + response.status);
+        }
+        console.log(chalk.green(res.length) + " users fetched.")
+        await sleep(1000);
+    }
+    return res;
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function getUserRecords(name) {
-    let response = await fetch(`https://ch.tetr.io/api/users/${name}/records`);
-    let data = await response.json();
-    return data.data;
+    let fortyLinesResponse = await fetch(`https://ch.tetr.io/api/users/${name}/records/40l/top`);
+    let fortyData = await fortyLinesResponse.json();
+    await sleep(1000);
+    let blitzResponse = await fetch(`https://ch.tetr.io/api/users/${name}/records/blitz/top`);
+    let blitzData = await blitzResponse.json();
+    await sleep(1000);
+
+    return {"40l": fortyData.data.entries[0], "blitz": blitzData.data.entries[0]};
 }

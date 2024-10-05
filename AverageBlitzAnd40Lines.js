@@ -8,7 +8,7 @@ main()
 async function main() {
     function get40lTime(record) {
         try {
-            return record.records['40l'].record.endcontext.finalTime / 1000;
+            return record['40l'].results.stats.finaltime / 1000;
         } catch (err) {
             return NaN;
         }
@@ -16,7 +16,7 @@ async function main() {
 
     function getBlitzScore(record) {
         try {
-            return record.records.blitz.record.endcontext.score;
+            return record['blitz'].results.stats.score;
         } catch (err) {
             return NaN;
         }
@@ -40,8 +40,13 @@ async function main() {
             let record = data[i].records;
 
             if (!isNaN(get40lTime(record))) {
+                if (get40lTime(record) > 1000) { // filter out times above 1000 seconds or 16 minutes, trolls
+                    continue;
+                }
                 if (!isNaN(rankSum40lTimes[data[i].tetraStats.league.rank])) {
+
                     rankSum40lTimes[data[i].tetraStats.league.rank] += get40lTime(record);
+
                 } else {
                     rankSum40lTimes[data[i].tetraStats.league.rank] = get40lTime(record);
                 }
@@ -52,6 +57,9 @@ async function main() {
                 }
             }
             if (!isNaN(getBlitzScore(record))) {
+                if (getBlitzScore(record) < 10) { // filter out scores under 10, trolls
+                    continue;
+                }
                 if (!isNaN(rankSumBlitzScore[data[i].tetraStats.league.rank])) {
                     rankSumBlitzScore[data[i].tetraStats.league.rank] += getBlitzScore(record);
                 } else {
@@ -122,6 +130,8 @@ function getRankNumber(rank) {
             return 2
         case 'x':
             return 1
+        case 'x+':
+            return 0
         case 'z':
             return 20
     }
@@ -164,6 +174,8 @@ function getColor(rank) {
             return 0xFF3813
         case 'x':
             return 0xFF45FF
+        case 'x+':
+            return 0xeb19be
         case 'z':
             return 0x375433
     }

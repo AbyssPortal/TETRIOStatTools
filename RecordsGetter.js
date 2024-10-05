@@ -4,6 +4,12 @@ import fs from 'node:fs';
 
 main();
 
+let session = (new Date() / 1000) + "_AVG_FORTY_LINES_PER_RANK";
+let options = {
+    headers: {
+        'X-Session-ID': session,
+    }
+};
 
 async function main() {
 
@@ -180,7 +186,7 @@ async function numberInput(question) {
 
 async function getUsersInRange(limit, after) {
     let url = `https://ch.tetr.io/api/users/lists/league?limit=${limit}&after=${after}`;
-    let response = await fetch(url);
+    let response = await fetch(url, options);
     let data = await response.json();
     return data.data.users;
 }
@@ -188,13 +194,8 @@ async function getUsersInRange(limit, after) {
 async function getUsers() {
 
     let url = "https://ch.tetr.io/api/users/by/league";
-    let session = (new Date() / 1000) + "_AVG_FORTY_LINES_PER_RANK";
     // im not sure if this is how x session headers work
-    let options = {
-        headers: {
-            'X-Session-ID': session,
-        }
-    };
+
     let res = [];
     let curr_url = url + "?limit=100";
     let response = await fetch(curr_url, options);
@@ -231,10 +232,10 @@ function sleep(ms) {
 }
 
 async function getUserRecords(name) {
-    let fortyLinesResponse = await fetch(`https://ch.tetr.io/api/users/${name}/records/40l/top`);
+    let fortyLinesResponse = await fetch(`https://ch.tetr.io/api/users/${name}/records/40l/top`, options);
     let fortyData = await fortyLinesResponse.json();
     await sleep(1000);
-    let blitzResponse = await fetch(`https://ch.tetr.io/api/users/${name}/records/blitz/top`);
+    let blitzResponse = await fetch(`https://ch.tetr.io/api/users/${name}/records/blitz/top`, options);
     let blitzData = await blitzResponse.json();
     await sleep(1000);
 
